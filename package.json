@@ -11,7 +11,7 @@
     "webpack-dev-server": "^2.11.1"
   },
   "scripts": {
-    "dev": "webpack-dev-server --env.development", 
+    "start": "webpack-dev-server --env.development",
     "prod": "webpack --env.production"
   },
   "keywords": [],
