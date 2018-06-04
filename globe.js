@@ -2,11 +2,13 @@
 // # Simple Globe viewer
 
 // Define initial camera position
-var positionOnGlobe = { longitude: 4.2165, latitude: 44.844, altitude: 3000 };
+var positionOnGlobe = { longitude: 2.351323, latitude: 48.856712, altitude: 25000000 };
 var promises = [];
 var miniView;
 var minDistance = 10000000;
 var maxDistance = 30000000;
+// enable mini Globe View
+var enableMiniGlobe = true;
 
 // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
 var viewerDiv = document.getElementById('viewerDiv');
@@ -19,7 +21,7 @@ function addLayerCb(layer) {
 }
 
 // Dont' instance mini viewer if it's Test env
-if (!renderer) {
+if (enableMiniGlobe) {
     miniView = new itowns.GlobeView(miniDiv, positionOnGlobe, {
         // `limit globe' subdivision level:
         // we're don't need a precise globe model
@@ -48,22 +50,31 @@ if (!renderer) {
     });
 
     // Add one imagery layer to the miniview
-    itowns.Fetcher.json('./node_modules/itowns/examples/layers/JSONLayers/Ortho.json').then(function _(layer) { miniView.addLayer(layer); });
+    var urlMapMiniGlobe = './node_modules/itowns/examples/layers/JSONLayers/Ortho.json';
+    itowns.Fetcher.json(urlMapMiniGlobe).then(function _(layer) {
+        layer.fx = 0.0;
+        miniView.addLayer(layer);
+    });
 }
 
 // Add one imagery layer to the scene
 // This layer is defined in a json file but it could be defined as a plain js
 // object. See Layer* for more info.
-promises.push(itowns.Fetcher.json('./node_modules/itowns/examples/layers/JSONLayers/Ortho.json').then(addLayerCb));
+var urlOrtho;
+if (urlOrtho) {
+    promises.push(itowns.Fetcher.json().then(addLayerCb));
+}
 // Add two elevation layers.
 // These will deform iTowns globe geometry to represent terrain elevation.
-promises.push(itowns.Fetcher.json('./node_modules/itowns/examples/layers/JSONLayers/WORLD_DTM.json').then(addLayerCb));
-promises.push(itowns.Fetcher.json('./node_modules/itowns/examples/layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addLayerCb));
-
+var urlWorlMnt;
+var urlIGNHighRes;
+if (urlWorlMnt && urlIGNHighRes) {
+    promises.push(itowns.Fetcher.json(urlWorlMnt).then(addLayerCb));
+    promises.push(itowns.Fetcher.json(urlIGNHighRes).then(addLayerCb));
+}
 
 function loadCollada(url) {
     var model;
-    console.log('model', model);
     // loading manager
     var loadingManager = new itowns.THREE.LoadingManager(function _addModel() {
         globeView.scene.add(model);
@@ -72,8 +83,8 @@ function loadCollada(url) {
     // collada loader
     var loader = new itowns.THREE.ColladaLoader(loadingManager);
 
-    // building coordinate
-    var coord = new itowns.Coordinates('EPSG:4326', 4.2165, 44.844, 1417);
+    var altitude = 0;
+    var coord = new itowns.Coordinates('EPSG:4326', positionOnGlobe.longitude, positionOnGlobe.latitude, altitude);
 
     loader.load(url, function col(collada) {
         var colladaID = globeView.mainLoop.gfxEngine.getUniqueThreejsLayer();
@@ -96,11 +107,16 @@ function loadCollada(url) {
 
 var script = document.createElement('script');
 var THREE = itowns.THREE;
+var urlCollada;
+
 script.type = 'text/javascript';
 script.src = 'https://cdn.rawgit.com/mrdoob/three.js/r' + THREE.REVISION + '/examples/js/loaders/ColladaLoader.js';
 script.onload = function l() {
-    loadCollada('https://raw.githubusercontent.com/iTowns/iTowns2-sample-data/master/models/collada/building.dae');
+    if (urlCollada) {
+        loadCollada(urlCollada);
+    }
 };
+
 document.body.appendChild(script);
 
 exports.view = globeView;
